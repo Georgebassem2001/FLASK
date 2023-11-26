@@ -16,3 +16,17 @@ class User(db.Model,UserMixin):
     username = db.Column(db.String(200))
     email = db.Column(db.String(200))
     password = db.Column(db.String(200))
+
+class orders_id(db.Model):
+    order_id = db.Column(db.Integer, nullable=False, primary_key=True,autoincrement=True)
+    date = db.Column(db.Date, nullable=False)
+    table2_entries = db.relationship('orders', backref='orders_id', cascade='all, delete-orphan')
+
+
+class orders(db.Model):
+    job_id = db.Column(db.Integer,primary_key=True,autoincrement=True)
+    order_id = db.Column(db.Integer,db.ForeignKey('orders_id.order_id'), nullable=False)
+    width = db.Column(db.Integer, nullable=False)
+    hight = db.Column(db.Integer, nullable=False)
+    weight = db.Column(db.Integer, nullable=False)
+    hint = db.Column(db.String(100),nullable=True)
