@@ -2,11 +2,20 @@ from app import app,db
 import datetime
 from flask import render_template,redirect,url_for,flash,request
 import forms
-from models import tasks,User
+from models import tasks,User,orders,orders_id
 from flask_login import LoginManager , UserMixin , login_required ,login_user, logout_user,current_user
 from app import login_manager
 
 
+# Function to group data by the first column
+def group_data(data):
+    grouped_data = {}
+    for row in data:
+        key = row[0]
+        if key not in grouped_data:
+            grouped_data[key] = []
+        grouped_data[key].append(row[1:])
+    return grouped_data
 
 @login_manager.user_loader
 def get(id):
@@ -57,8 +66,13 @@ def logout():
 @app.route("/homepage")
 @login_required
 def homepage():
-    alltask=tasks.query.all()
-    return render_template("homepage.html",alltasks=alltask)
+    joined_data = db.session.query(orders_id, orders).join(orders, orders_id.order_id == orders.order_id).all()
+    data_tuples = [(item.orders_id.order_id, item.orders_id.date, item.orders.width, item.orders.hight, item.orders.weight,item.orders.hint) for item in joined_data]
+
+    grouped_data = group_data(data_tuples)
+    print(grouped_data.items())
+    #alltask=tasks.query.all()
+    return render_template("homepage.html",grouped_data=grouped_data)
 
 
 @app.route("/add",methods=['GET','POST'])
@@ -95,13 +109,13 @@ def edit(task_id):
 @app.route("/delete/<int:task_id>",methods=['GET','POST'])
 @login_required
 def delete(task_id):
-    t=tasks.query.get(task_id)
+    t=orders_id.query.get(task_id)
     form=forms.DeleteTaskForm()
     if t:
         if form.validate_on_submit():
             db.session.delete(t)
             db.session.commit()
             return redirect(url_for("homepage"))
-        return render_template("delete.html",form=form,task_id=task_id,title=t.title)
+        return render_template("delete.html",form=form,task_id=task_id,title=orders_id.order_id)
     
     return render_template("delete.html")
