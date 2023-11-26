@@ -1,37 +1,41 @@
 {% extends "base.html" %}
 
 {% block main %}
-  {% for group, items in grouped_data.items() %}
-    <div class="card style="width: 18rem">
-      <div class="card-body">
-        <h5 class="card-title">اوردر {{ group }}</h5>
-        <ul>
-          <table class="table">
-            <thead>
-                <tr>
-                    <th>التاريخ</th>
-                    <th>العرض</th>
-                    <th>الطول</th>
-                    <th>وزن</th>
-                    <th>ملاحظات</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                    <tr>
-                        <td>{{ item[0] }}</td>
-                        <td>{{ item[1] }}</td>
-                        <td>{{ item[2] }}</td>
-                        <td>{{ item[3] }}</td>
-                        <td>{{ item[4] }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        </ul>
-        <a href="{{ url_for('edit', task_id=group) }}" class="btn btn-primary">Edit</a>
-        <a href="{{ url_for('delete', task_id=group) }}" class="btn btn-danger">Delete</a>
-      </div>
-    </div>
-  {% endfor %}
+<div class="container mt-5">
+  <div class="row">
+      {% for group, items in grouped_data.items() %}
+          <div class="col-md-6">
+              <div class="card mb-4">
+                  <div class="card-body custom-table">
+                      <h5 class="card-title custom-table">{{ items[0][5] }}</h5>
+                      <ul>
+                          <table class="table text-center ">
+                              <thead>
+                              <tr>
+                                  <th>ملاحظات</th>
+                                  <th>مقاس</th>
+                                  <th>وزن</th>
+                                  <th>التاريخ</th>
+                              </tr>
+                              </thead>
+                              <tbody>
+                              {% for item in items %}
+                                  <tr>
+                                      <td>{{ item[4] }}</td>
+                                      <td>{{ item[2] }}x{{ item[1] }}</td>
+                                      <td>{{ item[3] }}</td>
+                                      <td>{{ item[0] }}</td>
+                                  </tr>
+                              {% endfor %}
+                              </tbody>
+                          </table>
+                      </ul>
+                      <a href="{{ url_for('edit', task_id=group) }}" class="btn btn-primary">Edit</a>
+                      <a href="{{ url_for('delete', task_id=group) }}" class="btn btn-danger">Delete</a>
+                  </div>
+              </div>
+          </div>
+      {% endfor %}
+  </div>
+</div>
 {% endblock %}

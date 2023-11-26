@@ -1,21 +1,77 @@
 {% extends "base.html" %}
 
 {% block main %}
-<div class="container-fluid">
-  <form action="{{ url_for('add') }}" method="post">
-    {{ form.csrf_token }}
-    <div class="row">
-      <h3>Add Task</h3>
-      {%if title%}
-        <h4>{{title}}</h4>
-      {% endif %}
-      <div class="col">
-        {{ form.title(class="form-control") }}
+<div class="container mt-2 ml-auto">
+  <form method="POST" class="ml-auto" id="main-form">
+      {{ form.csrf_token }}
+      <div id="form-rows-container">
+        {{ form.hidden_tag() }}
+          {% for field in form if field.widget.input_type != 'hidden' %}
+              <div class="form-row text-right">
+                  <div class="form-group text-right col-md-12">
+                    {{ field.label(class="form-control-label") }}
+                  </div>
+                  <div class="form-group text-right col-md-12">
+                      {{ field(class="form-control") }}
+                  </div>
+              </div>
+          {% endfor %}
       </div>
-      <div class="col">
-        {{ form.submit(class="btn btn-primary") }}
-      </div>
-    </div>
   </form>
 </div>
+
+<div class="container mt-2 ml-auto">
+  <button type="button" class="btn btn-success" id="addRowButton">Add Row</button>
+  <button type="submit" class="btn btn-primary" form="main-form" id="submitFormsButton">Submit</button>
+</div>
+
+<script>
+  document.getElementById('addRowButton').addEventListener('click', function() {
+    let formRowsContainer = document.getElementById('form-rows-container');
+    let clonedRow = formRowsContainer.cloneNode(true);
+    // Clear input values in the cloned row
+    clonedRow.querySelectorAll('input, textarea').forEach((element) => {
+      if (element.name != "name"){
+        element.value = '';
+      }
+    });
+    formRowsContainer.appendChild(clonedRow);
+  });
+
+  document.getElementById('submitFormsButton').addEventListener('click', function() {
+    let formInstances = document.querySelectorAll('#main-form input, #main-form textarea');
+    let formDataArray = [];
+
+    formInstances.forEach((formInstance) => {
+      let formDataObject = {};
+      if (formInstance.name!="csrf_token"){
+        formDataObject[formInstance.name] = formInstance.value;
+        formDataArray.push(formDataObject);
+      }
+    });
+
+    // Send data to the server
+    fetch('/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formDataArray, null, 2),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Handle the response from the server
+      console.log(data);
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  });
+</script>
+
 {% endblock %}

@@ -1,6 +1,6 @@
 from app import app,db
 import datetime
-from flask import render_template,redirect,url_for,flash,request
+from flask import jsonify, render_template,redirect,url_for,flash,request
 import forms
 from models import tasks,User,orders,orders_id
 from flask_login import LoginManager , UserMixin , login_required ,login_user, logout_user,current_user
@@ -67,32 +67,48 @@ def logout():
 @login_required
 def homepage():
     joined_data = db.session.query(orders_id, orders).join(orders, orders_id.order_id == orders.order_id).all()
-    data_tuples = [(item.orders_id.order_id, item.orders_id.date, item.orders.width, item.orders.hight, item.orders.weight,item.orders.hint) for item in joined_data]
+    data_tuples = [(item.orders_id.order_id, item.orders_id.date, item.orders.width, item.orders.height, item.orders.weight,item.orders.hint,item.orders_id.name) for item in joined_data]
 
     grouped_data = group_data(data_tuples)
-    print(grouped_data.items())
-    #alltask=tasks.query.all()
     return render_template("homepage.html",grouped_data=grouped_data)
 
 
 @app.route("/add",methods=['GET','POST'])
 @login_required
 def add():
-    form=forms.AddTaskForm()
-    if form.validate_on_submit():
-        t=tasks(title=form.title.data,date=datetime.datetime.utcnow())
-        db.session.add(t)
-        db.session.commit()
-        flash("TASK ADDED SUCCESSFULLY")
+    
+    
+    if request.method == 'POST':
+        print("hellooooooo")
+        try:
+            data = request.get_json()
+            # Process the data on the server-side (e.g., save to the database)
+
+            new_order_id=orders_id(date=datetime.datetime.utcnow(),name=data[0]["name"])
+            db.session.add(new_order_id)
+            db.session.commit()
+
+            index=0
+            for i in range(int(len(data)/5)):
+                specified_order=orders(order_id=new_order_id.order_id,width=data[1+index]["width"],height=data[2+index]["height"],weight=data[3+index]["weight"],hint=data[4+index]["hint"])
+                index+=5
+                db.session.add(specified_order)
+                db.session.commit()
+        except Exception as e:
+            print(f"Error processing JSON data: {e}")
+
+        flash("ADDED SUCCESSFULLY")
         return redirect(url_for('homepage'))
-    return render_template("add.html",form=form)
+    else:
+        form=forms.Addorder()
+        return render_template("add.html",form=form)
 
 
 @app.route("/edit/<int:task_id>",methods=['GET','POST'])
 @login_required
 def edit(task_id):
-    t=tasks.query.get(task_id)
-    form=forms.AddTaskForm()
+    t=orders.query.get(task_id)
+    form=forms.Addorder()
     if t:
         if form.validate_on_submit():
             t.title=form.title.data
@@ -116,6 +132,6 @@ def delete(task_id):
             db.session.delete(t)
             db.session.commit()
             return redirect(url_for("homepage"))
-        return render_template("delete.html",form=form,task_id=task_id,title=orders_id.order_id)
+        return render_template("delete.html",form=form,task_id=task_id,title=t.name)
     
     return render_template("delete.html")
